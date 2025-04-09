@@ -1,0 +1,25 @@
+{
+  "name": "miniproject1",
+  "version": "1.0.0",
+  "description": "Mini project 1 is about displaying data list on page and make HTTP request to API to update data on API side.",
+  "homepage": "https://github.com/dalmirPereira/miniProject1#readme",
+  "bugs": {
+    "url": "https://github.com/dalmirPereira/miniProject1/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dalmirPereira/miniProject1.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "nodemon": "^3.1.9"
+  }
+}
