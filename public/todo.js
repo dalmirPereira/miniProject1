@@ -57,8 +57,8 @@ function modalSave() {
   
   // Prepare the data to send
   const todoNew = {
-    title: title,
-    desc: desc
+    title,
+    desc
   };
 
   // Send the POST request to your server
@@ -82,7 +82,7 @@ function modalSave() {
     //hide the modal
     myModal.hide();
 
-    render();
+    render(data);
   })
   .catch(error => {
     console.error('Error saving task:', error);
@@ -98,12 +98,14 @@ function modalUpdate() {
 
   // Prepare the data to send
   const todoUpdate = {
-    title: title,
-    desc: desc
+    id,
+    title,
+    desc
   };
 
+  console.log("update part: ", todoUpdate)
   // Send the POST request to your server
-  fetch(`http://localhost:3000/todolist/updateTask/${id}`, {
+  fetch(`http://localhost:3000/todolist/updateTask`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json' //headers tell the server it is being sent a data in JSON format.
@@ -123,7 +125,7 @@ function modalUpdate() {
     //hide the modal
     myModal.hide();
 
-    render();
+    render(data);
   })
   .catch(error => {
     console.error('Error saving task:', error);
@@ -135,11 +137,10 @@ function modalUpdate() {
 function todoDelete(id) {
   // Send the POST request to your server
   fetch(`http://localhost:3000/todolist/deleteTask/${id}`, {
-    method: 'PUT',
+    method: 'DELETE',
     headers: {
       'Content-Type': 'application/json' //headers tell the server it is being sent a data in JSON format.
     },
-    body: JSON.stringify(todoDelete) //fetch expects the body to be a string, not a JavaScript object.
   })
   .then(response => {
     if (!response.ok) { //This is a boolean provided by the Fetch API. It's true if the response status is in the range 200–299 (successful)
@@ -151,7 +152,7 @@ function todoDelete(id) {
   .then(data => {
     console.log('Task Deleted. New List:', data);
 
-    render();
+    render(data);
   })
   .catch(error => {
     console.error('Error saving task:', error);
@@ -179,7 +180,7 @@ function todoComplete(id) {
   .then(data => {
     console.log('Task Completed. New List:', data);
 
-    render();
+    render(data);
   })
   .catch(error => {
     console.error('Error saving task:', error);
@@ -187,60 +188,110 @@ function todoComplete(id) {
 }
 //---------------------------------------------------------------------------------------------------
 
+//---------------------------------------- SEARCH TODOS ---------------------------------
+function todoSearch() {
+  //get the search string
+  const todoSearch = document.getElementById("todoSearch").value;
+  
+  fetch(`http://localhost:3000/todolist/`)
+  .then(response => {
+    if (!response.ok) { //This is a boolean provided by the Fetch API. It's true if the response status is in the range 200–299 (successful)
+      throw new Error('Failed to complete task');
+    }
+
+    return response.json();
+  })
+  .then(data => {
+
+    //filter data and create an array with the tasks that includes the search
+    const searchList = data.filter(todo => 
+      todo.title.toLowerCase().includes(todoSearch.toLowerCase()) ||
+      todo.desc.toLowerCase().includes(todoSearch.toLowerCase())
+    );
+
+    console.log(searchList);
+
+    //check search and call render()
+    if (!todoSearch) {
+      render(data)
+    } else if (searchList.length === 0) {
+      alert("Tasks not found.")
+    } else {
+      render(searchList)
+    }
+    
+  })
+  .catch(error => {
+    console.error('Error saving task:', error);
+  });   
+}
+//---------------------------------------------------------------------------------------------------
+
+//---------------------------------------- UPDATE PAGE ---------------------------------
+function updatePage() {
+  fetch(`http://localhost:3000/todolist/`)
+      .then(response => {
+        if (!response.ok) { //This is a boolean provided by the Fetch API. It's true if the response status is in the range 200–299 (successful)
+          throw new Error('Failed to complete task');
+        }
+    
+        return response.json();
+      })
+      .then(data => {
+        console.log('Render:', data);
+        
+        render(data);
+      })
+      .catch(error => {
+        console.error('Error saving task:', error);
+      });
+};
+//---------------------------------------------------------------------------------------------------
+
 //---------------------------------------- RENDER PAGE/DATA ---------------------------------
-function render() {
+function render(data) {
+    //clean the todo list
     document.getElementById("rowContainer").innerHTML = null; //Clean the data before printing again
 
-    fetch(`http://localhost:3000/todolist/`)
-    .then(response => {
-      if (!response.ok) { //This is a boolean provided by the Fetch API. It's true if the response status is in the range 200–299 (successful)
-        throw new Error('Failed to complete task');
+    //execute the render
+    data.forEach((todo) => {
+      if (todo) {
+        //clone the template id="rowTemplate" which is a table and each element is a cell,
+        //and each template is a row.
+        const template = document
+          .getElementById("rowTemplate")
+          .content.cloneNode(true);
+
+        //Updating the elements of the template clonned 
+        template.getElementById("id").innerHTML = todo.id;
+        template.getElementById("title").innerHTML = todo.isCompleted
+          ? todo.title
+          : `<del>${todo.title}</del>`; //If the .isCompleted property is true, it will return the text with a strikethrough.
+        template.getElementById("desc").innerHTML = todo.isCompleted
+          ? todo.desc
+          : `<del>${todo.desc}</del>`;//If the .isCompleted property is true, it will return the text with a strikethrough.
+        template.getElementById("createdAt").innerHTML = todo.createdAt;
+
+        template.getElementById("todoUpdate").addEventListener("click", () => {
+          modalUpdateClick(todo.id);
+        }); 
+        template.getElementById("todoDel").addEventListener("click", () => {
+          todoDelete(todo.id);
+        });
+
+        template.getElementById("todoComplete").checked = !todo.isCompleted; //It makes the check box checked or unchecked depending on .isCompleted.
+        template.getElementById("todoComplete").addEventListener("click", (e) => {
+          e.preventDefault(); //prevent the page to reload
+          todoComplete(todo.id);
+        });
+  
+        // include the populated template into the page
+        document.getElementById("rowContainer").appendChild(template);
       }
-  
-      return response.json();
-    })
-    .then(data => {
-      console.log('Render:', data);
-  
-      data.forEach((todo) => {
-        if (todo) {
-          //clone the template id="rowTemplate" which is a table and each element is a cell,
-          //and each template is a row.
-          const template = document
-            .getElementById("rowTemplate")
-            .content.cloneNode(true);
-  
-          //Updating the elements of the template clonned 
-          template.getElementById("id").innerHTML = todo.id;
-          template.getElementById("title").innerHTML = todo.isCompleted
-            ? todo.title
-            : `<del>${todo.title}</del>`; //If the .isCompleted property is true, it will return the text with a strikethrough.
-          template.getElementById("desc").innerHTML = todo.isCompleted
-            ? todo.desc
-            : `<del>${todo.desc}</del>`;//If the .isCompleted property is true, it will return the text with a strikethrough.
-          template.getElementById("createdAt").innerHTML = todo.createdAt;
-  
-          template.getElementById("todoUpdate").addEventListener("click", () => {
-            modalUpdateClick(todo.id);
-          }); 
-          template.getElementById("todoDel").addEventListener("click", () => {
-            todoDelete(todo.id);
-          });
-  
-          template.getElementById("todoComplete").checked = !todo.isCompleted; //It makes the check box checked or unchecked depending on .isCompleted.
-          template.getElementById("todoComplete").addEventListener("click", (e) => {
-            e.preventDefault(); //prevent the page to reload
-            todoComplete(todo.id);
-          });
+    });
     
-          // include the populated template into the page
-          document.getElementById("rowContainer").appendChild(template);
-        }
-      });
-    })
-    .catch(error => {
-      console.error('Error saving task:', error);
-    });   
-  } render(); //execute render for the first time our update in the page
+  } 
+  
+  updatePage(); //execute render for the first time our update in the page
   
   

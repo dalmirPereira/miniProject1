@@ -1,32 +1,64 @@
 const express = require("express");
 const router = express.Router();
-const todoRoutes = require("../controllers/todoControllers")
-const { todos } = require('../models/todoModels') //Import todos object that will receive the tasks
+
+const todoControllers = require("../controllers/todoControllers")
 
 
-// default endpoint, gets all tasks
+// default endpoint, gets all tasks for render in the frontend.
 router.get('/', (req, res) => {
+    const todos = todoControllers.getData();
+
     res.json(todos)
 })
 
 // a POST request with data sent in the body of the request, representing a new task to add to our list
 router.post('/saveTask', (req, res) => {
-    todoRoutes.saveTask(req, res);
+    let todoNew = req.body;// data is sent via body
+    let title = todoNew.title; //extract the new task title
+    let desc = todoNew.desc; //extract the new task description
+
+    todoControllers.saveTask(title, desc);
+
+    const todos = todoControllers.getData();
+
+    res.status(200).json(todos);
 })
 
 // a POST request with data sent in the body of the request, representing a task to be updated to our list
-router.put('/updateTask/:id', (req, res) => {
-    todoRoutes.updateTask(req, res);
+router.put('/updateTask', (req, res) => {
+    let todoUpdate = req.body;// data is sent via body
+    let id = todoUpdate.id; //extract the new task title
+    let title = todoUpdate.title; //extract the new task title
+    let desc = todoUpdate.desc; //extract the new task description
+
+    todoControllers.updateTask(id, title, desc);
+
+    const todos = todoControllers.getData();
+
+    res.status(200).json(todos);
 })
 
 // a POST request with data sent in the body of the request, representing a task to be updated to our list
-router.put('/deleteTask/:id', (req, res) => {
-    todoRoutes.deleteTask(req, res);
+router.delete('/deleteTask/:id', (req, res) => {
+    let id = parseInt(req.params.id); //get the id sent as parameter
+    
+    todoControllers.deleteTask(id);
+
+    const todos = todoControllers.getData();
+
+    res.status(200).json(todos);
 })
 
 // a POST request with data sent in the body of the request, representing a task to be updated to our list
 router.put('/completeTask/:id', (req, res) => {
-    todoRoutes.completeTask(req, res);
+
+    let id = parseInt(req.params.id); //get the id sent as parameter
+
+    todoControllers.completeTask(id);
+
+    const todos = todoControllers.getData();
+
+    res.status(200).json(todos);
 })
 
 module.exports = router;
